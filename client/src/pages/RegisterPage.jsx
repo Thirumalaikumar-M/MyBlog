@@ -5,13 +5,23 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
 
   const register = async (e) => {
-    await e.preventDefault();
-    fetch("http://localhost:4000/register", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-      headers: { "Content-Type": "application/json" },
-    });
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:4000/register", {
+        method: "POST",
+        body: JSON.stringify({ username, password }),
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.status === 200) {
+        alert("registration successful");
+      } else {
+        alert("registration failed");
+      }
+    } catch (error) {
+      console.error("Registration error:", error.message);
+    }
   };
+
   return (
     <>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
