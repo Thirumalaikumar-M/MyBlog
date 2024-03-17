@@ -3,15 +3,19 @@ import cors from "cors";
 import mongoose from "mongoose";
 import User from "./models/User.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 
 const PORT = 4000;
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 app.use(express.json());
+app.use(cookieParser());
 
 const salt = bcrypt.genSaltSync(10);
+const secret = "asdfe45we45w345wegw345werjktjwertkj";
 
 mongoose
   .connect(
@@ -43,20 +47,30 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  try {
-    const existingUser = await User.findOne({ username });
-    if (!existingUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const passwordMatch = await bcrypt.compare(password, existingUser.password);
-    if (!passwordMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    res.status(200).json({ message: "Login successful", user: existingUser });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Internal server error" });
+  const userDoc = await User.findOne({ username });
+  const passOk = bcrypt.compareSync(password, userDoc.password);
+  if (passOk) {
+    // logged in
+    jwt.sign({ username, id: userDoc._id }, secret, {}, (err, token) => {
+      if (err) throw err;
+      res.cookie("token", token).json({
+        id: userDoc._id,
+        username,
+      });
+    });
+  } else {
+    res.status(400).json("wrong credentials");
   }
+});
+
+app.get("/profile", (req, res) => {
+  const { token } = req.cookies;
+  jwt.verify(token, secret, {}, (err, info) => {
+    if (err) throw err;
+    res.json(info);
+  });
+});
+
+app.post("/logout", (req, res) => {
+  res.cookie("token", "").json("ok");
 });

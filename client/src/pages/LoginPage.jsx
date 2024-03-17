@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { Navigate } from "react-router-dom";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [redirect, setRedirect] = useState(false);
 
   const login = async (e) => {
     e.preventDefault();
@@ -11,10 +13,12 @@ const LoginPage = () => {
         method: "POST",
         body: JSON.stringify({ username, password }),
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
       if (response.ok) {
-        const data = await response.json();
-        console.log("Login successful:", data);
+        // const data = await response.json();
+        // console.log("Login successful:", data);
+        setRedirect(true);
       } else {
         console.error("Login failed:", response.statusText);
       }
@@ -22,6 +26,9 @@ const LoginPage = () => {
       console.error("Login error:", error.message);
     }
   };
+  if (redirect) {
+    return <Navigate to={"/"} />;
+  }
 
   return (
     <>
@@ -33,7 +40,7 @@ const LoginPage = () => {
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form className="space-y-6" action="#" method="POST">
+          <form className="space-y-6" action="#" method="POST" onSubmit={login}>
             <div>
               <label
                 htmlFor="username"
